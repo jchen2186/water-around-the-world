@@ -6,6 +6,7 @@
     <title>Water Quality Worldwide</title>
     <!-- <script src="https://d3js.org/d3.v5.min.js"></script> -->
     <script src="https://d3js.org/d3.v4.js"></script>
+    <script src="https://d3js.org/d3-scale-chromatic.v1.min.js"></script>
     <link rel="stylesheet" href="./style.css">
   </head>
   <body>
@@ -16,24 +17,23 @@
     <script>
       // Define any URLs needed
       var GLOBAL_MAP_URL = "https://raw.githubusercontent.com/jchen2186/water-vis/master/geojson/countries.geojson?token=AFK5w0rbX2pqpKw1kIBfF7opY3u3f_eZks5cIY7VwA%3D%3D";
+      var DRINKING_WATER_PERCENT_URL = "https://raw.githubusercontent.com/jchen2186/water-vis/master/data/aquastat.csv?token=AFK5w8m8-ZHURknPn35sBvRjaxNgcdGiks5cIZ0wwA%3D%3D";
       
+      // Select objects from DOM
       var svg = d3.select("svg");
       var g = svg.append("g");
 
+      // Load the world map
       d3.queue()
         .defer(d3.json, GLOBAL_MAP_URL)
         .await(createMap);
       
       function createMap(error, countries) {
-        console.log("hello");
-
-        var canvasSize = [1000, 1000];
+        var canvasSize = [svg.style("width"), svg.style("height")];
 
         var projection = d3.geoMercator();
-          // .scale(Math.pow(2, 10 + 5.8))
-          // .center([-73.975, 40.7])
-          // .translate([canvasSize[0] / 10,
-          //             canvasSize[1] / 10]);
+          // .scale(110)
+          // .translate([canvasSize[0] / 2, canvasSize[1] / 2]);
         
         var path = d3.geoPath()
           .projection(projection);
@@ -45,9 +45,51 @@
           .attr("d", path);
       }
 
-      function key(d) {
-        return d.properties;
+      // Fill in colors in the map based on data
+      d3.csv(DRINKING_WATER_PERCENT_URL, function(error, data) {
+        var percent_drinking_water = data.filter(function(row) {
+          return row['Variable Name'] == "Total population with access to safe drinking-water (JMP)";
+        })
+        .map(function(row) {
+          return [row['Area'],
+                  row['Variable Name'],
+                  row['Year'],
+                  row['Value']];
+        })
+
+        // console.log(percent_drinking_water);
+        colorMap(percent_drinking_water);
+      })
+
+      function colorMap(data) {
+        console.log(data);
+
+        // var items = Object.entries(data);
+        // console.log(items);
+
+        // var items = Object.entries(data.)
+        // var minValue = d3.min(data, d => d[3]);
+        // var maxValue = d3.max(data, d => d[3]);
+        var minValue = 0;
+        var maxValue = 100;
+        console.log(minValue);
+        console.log(maxValue);
+        
+        var color = d3.scaleThreshold()
+          .domain(d3.range(minValue, maxValue, maxValue / 5))
+          .range(d3.schemeBlues[5]);
+        
+        // Connect country name from geojson with country name from data set
+        g.selectAll(".country")
+          .data(data, key)
+          .style("fill", d => color(d[3]));
       }
+
+      // Select key, name of country, from geojson file
+      function key(d) {
+        return d.properties ? d.properties.name : d[0];
+      }
+
     </script>
   </body>
 </html>
