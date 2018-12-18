@@ -1,20 +1,53 @@
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width">
-        <title>Water Quality Worldwide</title>
-        <script src="https://d3js.org/d3.v5.min.js"></script>
-        <script src="https://serv.cusp.nyu.edu/~hvo/files/us-refugees.js" type="text/javascript"></script>
-        <link rel="stylesheet" href="./style.css">
-    </head>
-    <body>
-        <div id="chart">
-            <svg width="1000" height="1000"></svg>
-        </div>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width">
+    <title>Water Quality Worldwide</title>
+    <!-- <script src="https://d3js.org/d3.v5.min.js"></script> -->
+    <script src="https://d3js.org/d3.v4.js"></script>
+    <link rel="stylesheet" href="./style.css">
+  </head>
+  <body>
+    <div id="chart">
+      <svg width="1000" height="1000"></svg>
+    </div>
 
-        <script>
+    <script>
+      // Define any URLs needed
+      var GLOBAL_MAP_URL = "https://raw.githubusercontent.com/jchen2186/water-vis/master/geojson/countries.geojson?token=AFK5w0rbX2pqpKw1kIBfF7opY3u3f_eZks5cIY7VwA%3D%3D";
+      
+      var svg = d3.select("svg");
+      var g = svg.append("g");
 
-        </script>
-    </body>
+      d3.queue()
+        .defer(d3.json, GLOBAL_MAP_URL)
+        .await(createMap);
+      
+      function createMap(error, countries) {
+        console.log("hello");
+
+        var canvasSize = [1000, 1000];
+
+        var projection = d3.geoMercator();
+          // .scale(Math.pow(2, 10 + 5.8))
+          // .center([-73.975, 40.7])
+          // .translate([canvasSize[0] / 10,
+          //             canvasSize[1] / 10]);
+        
+        var path = d3.geoPath()
+          .projection(projection);
+        
+        g.selectAll(".country")
+          .data(countries.features)
+          .enter().append("path")
+          .attr("class", "country")
+          .attr("d", path);
+      }
+
+      function key(d) {
+        return d.properties;
+      }
+    </script>
+  </body>
 </html>
