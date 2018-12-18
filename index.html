@@ -2,16 +2,23 @@
 <html lang="en">
   <head>
     <meta charset="utf-8">
+    <link href="/d3-geomap/css/d3.geomap.css" rel="stylesheet">
+    <script src="/d3-geomap/vendor/d3.geomap.dependencies.min.js"></script>
+    <script src="/d3-geomap/js/d3.geomap.min.js"></script>
     <meta name="viewport" content="width=device-width">
     <title>Water Quality Worldwide</title>
     <!-- <script src="https://d3js.org/d3.v5.min.js"></script> -->
     <script src="https://d3js.org/d3.v4.js"></script>
     <script src="https://d3js.org/d3-scale-chromatic.v1.min.js"></script>
+
+
+
     <link rel="stylesheet" href="./style.css">
   </head>
   <body>
+    <div id="map"></div>
     <div id="chart">
-      <svg width="1000" height="1000"></svg>
+      <svg width="1000" height="500"></svg>
     </div>
 
     <script>
@@ -31,18 +38,50 @@
       function createMap(error, countries) {
         var canvasSize = [svg.style("width"), svg.style("height")];
 
-        var projection = d3.geoMercator();
-          // .scale(110)
-          // .translate([canvasSize[0] / 2, canvasSize[1] / 2]);
+        var map = d3.geomap.choropleth()
+          .geofile(GLOBAL_MAP_URL)
+          .colors(colorbrewer.YlGnBu[9])
+          .column('YR2010')
+          .format(format)
+          .legend(true)
+          .unitId('iso3');
+
+
+        // var projection = d3.geoMercator();
+        //   // .scale(110)
+        //   // .translate([canvasSize[0] / 2, canvasSize[1] / 2]);
         
-        var path = d3.geoPath()
-          .projection(projection);
+        // var path = d3.geoPath()
+        //   .projection(projection);
         
-        g.selectAll(".country")
-          .data(countries.features)
-          .enter().append("path")
-          .attr("class", "country")
-          .attr("d", path);
+        // var tooltip = d3.select("body")
+        //   .append("div")
+        //   .attr("class", "tooltip")
+        //   .style("opacity", 0);
+        
+        // var countries = g.selectAll(".country")
+        //   .data(countries.features);
+        
+        // countries.enter().append("path")
+        //   .attr("class", "country")
+        //   .attr("d", path)
+        //   .on("mouseover", d => {
+        //     console.log("hello");
+        //     tooltip.transition()
+        //       .duration(100)
+        //       .style("opacity", 0.9);
+        //     tooltip.html(d[0] + ", " + d[3] + "%");
+        //   })
+        //   .on("mouseout", d => {
+        //     console.log("goodbye");
+        //     tooltip.transition()
+        //       .duration(100)
+        //       .style("opacity", 0);
+        //   })
+        //   .on("mousemove", d => {
+        //     tooltip.style("top", d3.event.pageY - 15 + "px")
+        //       .style("left", d3.event.pageX + 15 + "px")
+        //   });
       }
 
       // Fill in colors in the map based on data
@@ -53,43 +92,67 @@
         .map(function(row) {
           return [row['Area'],
                   row['Variable Name'],
-                  row['Year'],
-                  row['Value']];
+                  parseInt(row['Year']),
+                  parseFloat(row['Value'])];
         })
 
-        // console.log(percent_drinking_water);
         colorMap(percent_drinking_water);
       })
 
       function colorMap(data) {
-        console.log(data);
+        // console.log(data);
 
-        // var items = Object.entries(data);
-        // console.log(items);
-
-        // var items = Object.entries(data.)
         // var minValue = d3.min(data, d => d[3]);
-        // var maxValue = d3.max(data, d => d[3]);
         var minValue = 0;
+        // var maxValue = d3.max(data, d => d[3]);
         var maxValue = 100;
-        console.log(minValue);
-        console.log(maxValue);
-        
+        var numColors = 9;
+
         var color = d3.scaleThreshold()
-          .domain(d3.range(minValue, maxValue, maxValue / 5))
-          .range(d3.schemeBlues[5]);
+          .domain(d3.range(minValue, maxValue, maxValue / numColors))
+          .range(d3.schemeBlues[numColors]);
         
         // Connect country name from geojson with country name from data set
         g.selectAll(".country")
           .data(data, key)
           .style("fill", d => color(d[3]));
+
+        // Add legend for the scale
+        var x = d3.scaleLinear()
+          .domain([minValue, maxValue])
+          .rangeRound([0, 490]);
+
+        g.append("g")
+          .attr("class", "legend")
+          .attr("transform", "translate(75, 475)")
+          .call(d3.axisBottom(x)
+            .tickValues(d3.range(minValue, maxValue, maxValue / numColors))
+            .tickFormat(d3.format(".0s"))
+          ).append("text")
+            .attr("id", "legendTitle")
+            .attr("x", 200)
+            .attr("y", -10)
+            .text("Percentage of Population with Access to Safe Drinking Water");
+
+        console.log(x.range()[1]);
+        
+        for (var i = 0; i < numColors - 1; i++) {
+          g.append("g")
+            .attr("class", "legendColorBar")
+            .attr("transform", "translate(75, 475)")
+            .append("rect")
+              .attr("x", i * x.range()[1] / numColors)
+              .attr("y", 0)
+              .attr("width", x.range()[1] / numColors)
+              .attr("height", 5)
+              .style("fill", color(maxValue / (numColors - 1) * i));
+        }
       }
 
       // Select key, name of country, from geojson file
       function key(d) {
         return d.properties ? d.properties.name : d[0];
       }
-
     </script>
   </body>
 </html>
