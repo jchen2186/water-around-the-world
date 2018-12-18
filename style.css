@@ -1,0 +1,32 @@
+.bar {
+    fill: SteelBlue;
+    stroke: Black;
+  }
+  
+  .bar:hover {
+    fill: Salmon;
+  }
+  
+  .axis--x path,
+  .axis--y path {
+    display: none;
+  }
+  
+  .label {
+    fill: Black;
+    font-size: 18px;
+  }
+  
+  .grid line {
+    stroke: LightGrey;
+  }
+  
+  .tooltip {
+    position: absolute;
+    z-index: 10;
+    visibility: hidden;
+    background: Beige;
+    padding: 5px;
+    border: 1px solid Black;
+  }
+  
