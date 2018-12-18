@@ -38,50 +38,51 @@
       function createMap(error, countries) {
         var canvasSize = [svg.style("width"), svg.style("height")];
 
-        var map = d3.geomap.choropleth()
-          .geofile(GLOBAL_MAP_URL)
-          .colors(colorbrewer.YlGnBu[9])
-          .column('YR2010')
-          .format(format)
-          .legend(true)
-          .unitId('iso3');
+        // var map = d3.geomap.choropleth()
+        //   .geofile(GLOBAL_MAP_URL)
+        //   .colors(colorbrewer.YlGnBu[9])
+        //   .column('YR2010')
+        //   .format(format)
+        //   .legend(true)
+        //   .unitId('iso3');
 
 
-        // var projection = d3.geoMercator();
-        //   // .scale(110)
-        //   // .translate([canvasSize[0] / 2, canvasSize[1] / 2]);
+        var projection = d3.geoMercator();
+          // .scale(110)
+          // .translate([canvasSize[0] / 2, canvasSize[1] / 2]);
         
-        // var path = d3.geoPath()
-        //   .projection(projection);
+        var path = d3.geoPath()
+          .projection(projection);
         
-        // var tooltip = d3.select("body")
-        //   .append("div")
-        //   .attr("class", "tooltip")
-        //   .style("opacity", 0);
+        var tooltip = d3.select("body")
+          .append("div")
+          .attr("class", "tooltip")
+          .style("opacity", 0);
         
-        // var countries = g.selectAll(".country")
-        //   .data(countries.features);
+        var countries = g.selectAll(".country")
+          .data(countries.features);
         
-        // countries.enter().append("path")
-        //   .attr("class", "country")
-        //   .attr("d", path)
-        //   .on("mouseover", d => {
-        //     console.log("hello");
-        //     tooltip.transition()
-        //       .duration(100)
-        //       .style("opacity", 0.9);
-        //     tooltip.html(d[0] + ", " + d[3] + "%");
-        //   })
-        //   .on("mouseout", d => {
-        //     console.log("goodbye");
-        //     tooltip.transition()
-        //       .duration(100)
-        //       .style("opacity", 0);
-        //   })
-        //   .on("mousemove", d => {
-        //     tooltip.style("top", d3.event.pageY - 15 + "px")
-        //       .style("left", d3.event.pageX + 15 + "px")
-        //   });
+        countries.enter().append("path")
+          .attr("class", "country")
+          .attr("d", path)
+          .on("click", countryClicked)
+          .on("mouseover", d => {
+            console.log("hello");
+            tooltip.transition()
+              .duration(100)
+              .style("opacity", 0.9);
+            tooltip.html(d[0] + ", " + d[3] + "%");
+          })
+          .on("mouseout", d => {
+            console.log("goodbye");
+            tooltip.transition()
+              .duration(100)
+              .style("opacity", 0);
+          })
+          .on("mousemove", d => {
+            tooltip.style("top", d3.event.pageY - 15 + "px")
+              .style("left", d3.event.pageX + 15 + "px")
+          });
       }
 
       // Fill in colors in the map based on data
@@ -152,6 +153,22 @@
       // Select key, name of country, from geojson file
       function key(d) {
         return d.properties ? d.properties.name : d[0];
+      }
+
+      function countryClicked(data) {
+        // alert(data);
+
+        var projection = d3.geoMercator();
+        var pathCountry = d3.geoPath(projection);
+
+        g.append("g")
+          .attr("class", data[0])
+          .attr("width", boundingArea.width)
+          .attr("height", boundingArea.height)
+          .selectAll("path")
+            .data(data.geometries)
+          .enter().append("path")
+            .attr("d", pathCountry);
       }
     </script>
   </body>

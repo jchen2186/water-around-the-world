@@ -1,6 +1,6 @@
 .country {
   fill: None;
-  stroke: Black;
+  stroke: White;
 }
 
 .bar {
@@ -28,7 +28,7 @@
 
 .tooltip {
   position: absolute;
-  z-index: 10;
+  z-index: 100;
   visibility: hidden;
   background: Beige;
   padding: 5px;
