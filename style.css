@@ -3,6 +3,15 @@
   stroke: White;
 }
 
+.info-box {
+  fill: None;
+  stroke: Black;
+}
+
+.info-text {
+  fill: Black;
+}
+
 .bar {
   fill: SteelBlue;
   stroke: Black;
@@ -44,7 +53,7 @@ text {
   display: none;
 }
 
-.tooltip {
+/* .tooltip {
   font-family: Helvetica;
   font-size: 13px;
   text-align: center;
@@ -55,4 +64,18 @@ text {
   border: 0px;
   border-radius: 8px;
   pointer-events: none;
+} */
+
+div.tooltip {   
+  position: absolute;         
+  text-align: center;         
+  width: 80px;                    
+  height: 28px;                   
+  padding: 2px;               
+  font: 12px sans-serif;      
+  background: lightsteelblue; 
+  border: 0px;        
+  border-radius: 8px;         
+  pointer-events: none;         
+  z-index: 100;  
 }

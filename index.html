@@ -2,23 +2,18 @@
 <html lang="en">
   <head>
     <meta charset="utf-8">
-    <link href="/d3-geomap/css/d3.geomap.css" rel="stylesheet">
-    <script src="/d3-geomap/vendor/d3.geomap.dependencies.min.js"></script>
-    <script src="/d3-geomap/js/d3.geomap.min.js"></script>
     <meta name="viewport" content="width=device-width">
+    
     <title>Water Quality Worldwide</title>
-    <!-- <script src="https://d3js.org/d3.v5.min.js"></script> -->
+
     <script src="https://d3js.org/d3.v4.js"></script>
     <script src="https://d3js.org/d3-scale-chromatic.v1.min.js"></script>
-
-
 
     <link rel="stylesheet" href="./style.css">
   </head>
   <body>
-    <div id="map"></div>
     <div id="chart">
-      <svg width="1000" height="500"></svg>
+      <svg width="1000" height="600"></svg>
     </div>
 
     <script>
@@ -38,15 +33,6 @@
       function createMap(error, countries) {
         var canvasSize = [svg.style("width"), svg.style("height")];
 
-        // var map = d3.geomap.choropleth()
-        //   .geofile(GLOBAL_MAP_URL)
-        //   .colors(colorbrewer.YlGnBu[9])
-        //   .column('YR2010')
-        //   .format(format)
-        //   .legend(true)
-        //   .unitId('iso3');
-
-
         var projection = d3.geoMercator();
           // .scale(110)
           // .translate([canvasSize[0] / 2, canvasSize[1] / 2]);
@@ -54,35 +40,13 @@
         var path = d3.geoPath()
           .projection(projection);
         
-        var tooltip = d3.select("body")
-          .append("div")
-          .attr("class", "tooltip")
-          .style("opacity", 0);
-        
         var countries = g.selectAll(".country")
           .data(countries.features);
         
         countries.enter().append("path")
           .attr("class", "country")
           .attr("d", path)
-          .on("click", countryClicked)
-          .on("mouseover", d => {
-            console.log("hello");
-            tooltip.transition()
-              .duration(100)
-              .style("opacity", 0.9);
-            tooltip.html(d[0] + ", " + d[3] + "%");
-          })
-          .on("mouseout", d => {
-            console.log("goodbye");
-            tooltip.transition()
-              .duration(100)
-              .style("opacity", 0);
-          })
-          .on("mousemove", d => {
-            tooltip.style("top", d3.event.pageY - 15 + "px")
-              .style("left", d3.event.pageX + 15 + "px")
-          });
+          .on("mouseover", showCountryInfo);
       }
 
       // Fill in colors in the map based on data
@@ -107,7 +71,7 @@
         var minValue = 0;
         // var maxValue = d3.max(data, d => d[3]);
         var maxValue = 100;
-        var numColors = 9;
+        var numColors = 6;
 
         var color = d3.scaleThreshold()
           .domain(d3.range(minValue, maxValue, maxValue / numColors))
@@ -121,7 +85,7 @@
         // Add legend for the scale
         var x = d3.scaleLinear()
           .domain([minValue, maxValue])
-          .rangeRound([0, 490]);
+          .rangeRound([0, 450]);
 
         g.append("g")
           .attr("class", "legend")
@@ -155,20 +119,35 @@
         return d.properties ? d.properties.name : d[0];
       }
 
-      function countryClicked(data) {
+      function showCountryInfo(data) {
         // alert(data);
+        // console.log(data);
 
-        var projection = d3.geoMercator();
-        var pathCountry = d3.geoPath(projection);
+        d3.selectAll("rect.info-box").remove();
+        d3.selectAll("text.info-text").remove();
+        
+        var info = g.append("g")
+          .attr("transform", "translate(600, 450)");
+        
+        info.append("rect")
+          .attr("class", "info-box")
+          .attr("x", 0)
+          .attr("y", 0)
+          .attr("width", 350)
+          .attr("height", 50);
+        
+        info.append("text")
+          .attr("class", "info-text")
+          .text(`Country: ${data[0]}`)
+          .attr("x", 5)
+          .attr("y", 15);
 
-        g.append("g")
-          .attr("class", data[0])
-          .attr("width", boundingArea.width)
-          .attr("height", boundingArea.height)
-          .selectAll("path")
-            .data(data.geometries)
-          .enter().append("path")
-            .attr("d", pathCountry);
+        info.append("text")
+          .attr("class", "info-text")
+          .text(`${data[1].slice(0, -6)}: ${data[3]}`)
+          .attr("x", 5)
+          .attr("y", 30);
+          
       }
     </script>
   </body>
