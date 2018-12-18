@@ -67,62 +67,82 @@
       function colorMap(data) {
         // console.log(data);
 
-        // var minValue = d3.min(data, d => d[3]);
-        var minValue = 0;
-        // var maxValue = d3.max(data, d => d[3]);
+        var minValue = d3.min(data, d => d[3]);
+        var maxValue = d3.max(data, d => d[3]);
+        var minValue = 30;
         var maxValue = 100;
-        var numColors = 6;
+        var steps = 5;
 
         var color = d3.scaleThreshold()
-          .domain(d3.range(minValue, maxValue, maxValue / numColors))
-          .range(d3.schemeBlues[numColors]);
-        
+          .domain(d3.range(minValue, maxValue, maxValue / steps))
+          .range(d3.schemeBlues[steps]);
+
         // Connect country name from geojson with country name from data set
-        g.selectAll(".country")
-          .data(data, key)
+        var countries = g.selectAll(".country")
+          .data(data, d => d.properties ? d.properties.name : d[0])
           .style("fill", d => color(d[3]));
 
         // Add legend for the scale
         var x = d3.scaleLinear()
           .domain([minValue, maxValue])
-          .rangeRound([0, 450]);
+          .rangeRound([0, 400]);
 
         g.append("g")
           .attr("class", "legend")
           .attr("transform", "translate(75, 475)")
-          .call(d3.axisBottom(x)
-            .tickValues(d3.range(minValue, maxValue, maxValue / numColors))
-            .tickFormat(d3.format(".0s"))
-          ).append("text")
-            .attr("id", "legendTitle")
-            .attr("x", 200)
-            .attr("y", -10)
-            .text("Percentage of Population with Access to Safe Drinking Water");
+          .append("text")
+          .attr("class", "axis--map--caption")
+          .attr("x", 200)
+          .attr("y", -6)
+          .text("Percentage of Population with Access to Safe Drinking Water");          ;
 
-        console.log(x.range()[1]);
+        let legend = d3.select(".legend");
+
+        let boxes = legend.selectAll("rect")
+          .data(color.range().map(function(d) {
+            d = color.invertExtent(d);
+            if (d[0]==null) d[0] = x.domain()[0];
+            if (d[1]==null) d[1] = x.domain()[1];
+            return d;
+          }));
+
+        // We then create/update all boxes to the appropriate size and color
+        boxes
+          .enter().append("rect")
+          .merge(boxes)
+            .attr("height", 6)
+            .attr("x", d => x(d[0]))
+            .attr("width", d => (x(d[1]) - x(d[0])))
+            .attr("fill", d => color(d[0]));
+
+        // Update the tick values
+        legend.call(d3.axisBottom(x)
+            .ticks(steps, "s")
+            .tickSize(10, 0)
+            .tickValues(color.domain()))
+          .select(".domain")
+            .remove();
         
-        for (var i = 0; i < numColors - 1; i++) {
-          g.append("g")
-            .attr("class", "legendColorBar")
-            .attr("transform", "translate(75, 475)")
-            .append("rect")
-              .attr("x", i * x.range()[1] / numColors)
-              .attr("y", 0)
-              .attr("width", x.range()[1] / numColors)
-              .attr("height", 5)
-              .style("fill", color(maxValue / (numColors - 1) * i));
-        }
-      }
-
-      // Select key, name of country, from geojson file
-      function key(d) {
-        return d.properties ? d.properties.name : d[0];
+        // Draw initial info box
+        var info = g.append("g")
+          .attr("transform", "translate(600, 450)");
+        
+        info.append("rect")
+          .attr("class", "info-box")
+          .attr("x", 0)
+          .attr("y", 0)
+          .attr("width", 350)
+          .attr("height", 50);
+        
+        info.append("text")
+          .attr("class", "info-text")
+          .text(`Hover over each country for more info!`)
+          .attr("x", 5)
+          .attr("y", 15);
       }
 
       function showCountryInfo(data) {
-        // alert(data);
-        // console.log(data);
-
+        // Remove the previous info box
         d3.selectAll("rect.info-box").remove();
         d3.selectAll("text.info-text").remove();
         
