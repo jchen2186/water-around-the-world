@@ -14,10 +14,10 @@
   </head>
   <body>
     <div id="chart">
-      <svg width="1000" height="1000"></svg>
+      <svg width="1000" height="1500"></svg>
 
       <!-- Radio buttons to select data -->
-      <form>
+      <form id="population-type">
         <input type="radio" name="population" value="total" checked> Total Population<br>
         <input type="radio" name="population" value="rural"> Rural Population<br>
         <input type="radio" name="population" value="urban"> Urban Population
@@ -33,7 +33,7 @@
       var svg = d3.select("svg");
       var gChart = svg.append("g");
       var gMap = svg.append("g")
-        .attr("transform", "translate(0, 400)");
+        .attr("transform", "translate(0, 900)");
 
       // Load the data and create the plots
       d3.queue()
@@ -55,8 +55,7 @@
         console.log();
       }
       
-      // Creates the initial map, 
-      // which contains the data for the total population
+      // Creates the initial map, which contains the data for the total population
       function createMap(g, countries, waterData) {
         let data = waterData.filter(function(row) {
           return row['Variable Name'] == "Total population with access to safe drinking-water (JMP)";
@@ -75,12 +74,12 @@
           .projection(projection);
         
         // Draw outlines of the countries
-        var countries = g.selectAll(".country")
-          .data(countries.features);
-        
-        countries.enter()
+        g.selectAll(".country")
+          .data(countries.features)
+          .enter()
           .append("path")
           .attr("class", "country")
+          .attr("id", d => d.properties.name)
           .attr("d", path)
           .on("mouseover", showCountryInfo);
         
@@ -107,15 +106,21 @@
         
         info.append("text")
           .attr("class", "info-text")
-          .text(`Hover over each country for more info!`)
+          .text(`Hover over each country for more info.`)
           .attr("x", 5)
           .attr("y", 15);
         
         // Afterwards, call updateMap() to fill countries with color
         updateMap(g, waterData, "total");
+
+        d3.selectAll("input")
+          .on("change", function() {
+            updateMap(g, waterData, this.value)
+          });
+
       }
 
-      function updateMap(g, waterData, dataType) {
+      function updateMap(g, waterData, dataType = "total") {
         // Filter data based on the population
         let data = waterData.filter(function(row) {
           if (dataType == "total") {
@@ -152,8 +157,7 @@
         let legend = d3.select(".legend");
 
         // Update the countries with their color
-        countries
-          .transition()
+        countries.transition()
           .duration(300)
           .style("fill", d => color(d[3]));
         
