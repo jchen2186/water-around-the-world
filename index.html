@@ -243,41 +243,44 @@
         // Afterwards, call updateChart() to fill chart with bars
         updateChart(g, waterData);
 
+        // 
         d3.selectAll(".chart-filter")
           .on("change", function() {
             updateChart(g, waterData)
           });
       }
 
-      function updateChart(g, waterData) {
-        let chosenOptions = function() {
-          let chartFilterElements = d3.selectAll(".chart-filter")._groups[0];
-          let options = {};
+      // Helper function to get the options from the Display Options box
+      function getChosenOptions() {
+        let chartFilterElements = d3.selectAll(".chart-filter")._groups[0];
+        let options = {};
 
-          for (let i = 0; i < chartFilterElements.length; i++) {
-            let el = chartFilterElements[i];
-            if (el.type == "radio" && el.checked) {
-              options[el.name] = el.value;
-            }
-            else if (el.type == "number") {
-              options["numCountries"] = parseInt(el.value);
-            }
+        for (let i = 0; i < chartFilterElements.length; i++) {
+          let el = chartFilterElements[i];
+          if (el.type == "radio" && el.checked) {
+            options[el.name] = el.value;
           }
-          return options;
+          else if (el.type == "number") {
+            options["numCountries"] = parseInt(el.value);
+          }
         }
+        return options;
+      }
 
-        chosenOptions = chosenOptions();
+      // Helper function to get the filtered data based on the Display Options box
+      function getUpdatedData(g, waterData) {
+        let options = getChosenOptions();
 
         // Filter data based on the population and select top 25 descending order
         let data = waterData.filter(function(row) {
           // First filter by population type
-          if (chosenOptions["population-type"] == "total") {
+          if (options["population-type"] == "total") {
             return row["Variable Name"] == "Total population with access to safe drinking-water (JMP)";
           }
-          else if (chosenOptions["population-type"] == "urban") {
+          else if (options["population-type"] == "urban") {
             return row["Variable Name"] == "Urban population with access to safe drinking-water (JMP)";
           }
-          else if (chosenOptions["population-type"] == "rural") {
+          else if (options["population-type"] == "rural") {
             return row["Variable Name"] == "Rural population with access to safe drinking-water (JMP)";
           }
         }).map(row => {
@@ -288,7 +291,7 @@
         })
         // Sort to the chosen option
         .sort((x, y) => {
-          if (chosenOptions["sort"] == "ascending") {
+          if (options["sort"] == "ascending") {
             return d3.ascending(x[3], y[3]);
           }
           else {
@@ -296,10 +299,17 @@
           }
         })
         // Select the number of countries as chosen
-        .slice(0, chosenOptions["numCountries"]);
+        .slice(0, options["numCountries"]);
 
+        return data;
+      }
+
+      function updateChart(g, waterData) {
+        let options = getChosenOptions();
+        let data = getUpdatedData(g, waterData);
         let xShift = 250;
         let maxValue = 100;
+        let t = d3.transition().duration(750);
 
         // Generate x and y scaling for bar chart
         let x = d3.scaleLinear()
@@ -330,7 +340,7 @@
             .attr("x", xShift)
             .attr("y", d => y(d[0]))
             .attr("width", d => x(d[3]))
-            .attr("height", (y.range()[1] - 100) / chosenOptions["numCountries"])
+            .attr("height", (y.range()[1] - 100) / options["numCountries"])
             .on("mouseover", function(d) {
               d3.select(this)
                 .transition().ease(d3.easeBounce).duration(500)
@@ -345,7 +355,7 @@
                 .attr("x", xShift)
                 .attr("y", d => y(d[0]))
                 .attr("width", d => x(d[3]))
-                .attr("height", (y.range()[1] - 100) / chosenOptions["numCountries"]);
+                .attr("height", (y.range()[1] - 100) / options["numCountries"]);
             });
       }
       
