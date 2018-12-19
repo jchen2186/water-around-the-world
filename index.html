@@ -27,8 +27,21 @@
           <div class="column is-12">
             <div class="container content has-text-centered">
               <!-- <i class="is-large fa fa-tint" aria-hidden="true"></i> -->
-              <h1 class="title">Water Around the World</h1>
-              <h3 class="subtitle">Disparities in Urban and Rural Areas</h3>
+              <h1 class="title is-size-1">Water Around the World</h1>
+              <h2 class="subtitle is-size-2">Disparities in Urban and Rural Areas</h3>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="hero is-light ">
+      <div class="hero-body">
+        <div class="container">
+          <div class="columns">
+            <div class="column is-offset-2 is-8">
+            <h3 class="title is-size-3">Background and Purpose</h3>
+              <p>With the use data from the AQUASTAT Database, this visualization aims to inform people of the disparities in drinking water around the world. Although clean drinking water is a necessity in life, not everyone has access to it, and there is an even clearer distinction between those living in urban and rural areas. This project uses a choropleth to geographically show the percentage of the population with clean drinking water for both urban and rural areas, which provides a better understanding of where the regions of water disparity are located. It also uses bar charts to help show the water disparity for selected countries of interest.</p>
             </div>
           </div>
         </div>
@@ -36,58 +49,96 @@
     </section>
 
     <section>
-      <div class="container">
-        <div class="columns">
-          <div class="column is-offset-2 is-8">
-          <h2 class="title">Background and Purpose</h2>
-            <p>With the use data from the AQUASTAT Database, this visualization aims to inform people of the disparities in drinking water around the world. Although clean drinking water is a necessity in life, not everyone has access to it, and there is an even clearer distinction between those living in urban and rural areas. This project uses a choropleth to geographically show the percentage of the population with clean drinking water for both urban and rural areas, which provides a better understanding of where the regions of water disparity are located. It also uses bar charts to help show the water disparity for selected countries of interest.</p>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <section>
+      <!-- Choropleth container -->
       <div class="container has-text-centered">
         <div class="columns">
           <div class="column is-offset-2 is-8">
-            <h2 class="title">Choropleth Map of Water Disparities Worldwide</h2>
+            <h3 class="title is-size-3 has-text-left">Choropleth Map of Water Disparities Worldwide</h3>
           </div>
         </div>
-          <div class="columns">
-            <div class="column is-offset-3 is is-6">
-              <article class="message is-info">
-                <div class="message-header">
-                  <p>Filter Options</p>>
-                </div>
-                <div class="message-body">
-                  <!-- Radio buttons to select data -->
+        <div class="columns">
+          <div class="column is-offset-3 is is-6">
+            <article class="message is-info">
+              <div class="message-header">
+                <p>Filter Options</p>>
+              </div>
+              <div class="message-body">
+                <!-- Radio buttons to select data -->
+                <label class="radio">
+                    <input type="radio" name="population" value="total" checked>
+                    Total Population
+                  </label>
                   <label class="radio">
-                      <input type="radio" name="population" value="total" checked>
-                      Total Population
-                    </label>
-                    <label class="radio">
-                      <input type="radio" name="population" value="urban">
-                      Urban Population
-                    </label>
-                    <label class="radio">
-                      <input type="radio" name="population" value="rural">
-                      Rural Population
-                    </label>
-                </div>
-              </article>
-            </div>
+                    <input type="radio" name="population" value="urban">
+                    Urban Population
+                  </label>
+                  <label class="radio">
+                    <input type="radio" name="population" value="rural">
+                    Rural Population
+                  </label>
+              </div>
+            </article>
           </div>
+        </div>
             
         <div class="vis">
           <svg id="svgMap" width="1000" height="550"></svg>
         </div>
       </div>
 
-      <div class="container">
-        <h2 class="title">Water Disparities in Selected Countries</h2>
-        <div class="vis">
-          <svg id="svgBarChart" width="1000" height="800"></svg>
+      <div class="container has-text-centered">
+        <div class="columns">
+          <div class="column is-offset-2 is-8">
+            <h3 class="title is-size-3 has-text-left">Water Disparities in Selected Countries</h3>
+          </div>
+        </div>
+        <div class="columns">
+          <div class="column is-offset-1 is-4">
+            <div class="vis">
+              <svg id="svgBarChart" width="500" height="600"></svg>
+            </div>
+          </div>
 
+          <!-- Display options box -->
+          <div class="column is-offset-2 is-4">
+            <article class="message">
+              <div class="message-header">
+                <p>Display Options</p>
+              </div>
+              <div class="message-body">
+                <h3 class="subtitle"></h3>
+                <h3 class="subtitle">Sort Order</h3>
+                <label class="radio">
+                  <input type="radio" name="sort" value="descending" checked>
+                  Ascending
+                </label>
+                <label class="radio">
+                  <input type="radio" name="sort" value="descending">
+                  Descending
+                </label>
+
+                <h3 class="subtitle">Number of Countries</h3>
+                <input class="input" type="number" value="25" min="1" max="25">
+
+                <h3 class="subtitle">Population Type</h3>
+                <label class="radio">
+                  <input type="radio" name="population-type" value="total" checked>
+                  Total
+                </label>
+                <label class="radio">
+                  <input type="radio" name="population-type" value="urban">
+                  Urban
+                </label>
+                <label class="radio">
+                  <input type="radio" name="population-type" value="rural">
+                  Rural
+                </label>
+
+                <button class="button is-info">Update Graph</button>
+                        
+              </div>
+            </article>
+          </div>
         </div>
       </div>
     </section>
@@ -133,15 +184,14 @@
           return d3.ascending(x[3], y[3]);
         }).slice(0, 25);
 
-        let maxValue = d3.max(data, d => d[3]);
+        let maxValue = 100;
 
         let xShift = 250;
-        // console.log(maxValue);
         
         // Generate x and y scaling for bar chart
         let x = d3.scaleLinear()
           .domain([0, maxValue])
-          .rangeRound([0, 300]);
+          .rangeRound([0, 200]);
         
         let y = d3.scaleBand()
           .domain(data.map(d => d[0]))
@@ -354,7 +404,6 @@
           .on("change", function() {
             updateMap(g, waterData, this.value)
           });
-
       }
 
       function updateMap(g, waterData, dataType = "total") {
@@ -397,31 +446,6 @@
         countries.transition()
           .duration(300)
           .style("fill", d => color(d[3]));
-        
-        // // Update the legend
-        // let boxes = legend.selectAll("rect")
-        //   .data(color.range().map(function(d) {
-        //     d = color.invertExtent(d);
-        //     if (d[0]==null) d[0] = x.domain()[0];
-        //     if (d[1]==null) d[1] = x.domain()[1];
-        //     return d;
-        //   }));
-
-        // boxes.enter()
-        //   .append("rect")
-        //   .merge(boxes)
-        //     .attr("height", 6)
-        //     .attr("x", d => x(d[0]))
-        //     .attr("width", d => (x(d[1]) - x(d[0])))
-        //     .attr("fill", d => color(d[0]));
-
-        // // Update the tick values
-        // legend.call(d3.axisBottom(x)
-        //   .ticks(steps, "s")
-        //   .tickSize(10,0)
-        //   .tickValues(color.domain()))
-        //   .select(".domain")
-        //     .remove();
         
         // Remove the previous info box
         d3.selectAll("rect.info-box").remove();
