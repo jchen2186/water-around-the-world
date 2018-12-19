@@ -28,14 +28,14 @@
             <div class="container content has-text-centered">
               <!-- <i class="is-large fa fa-tint" aria-hidden="true"></i> -->
               <h1 class="title is-size-1">Water Around the World</h1>
-              <h2 class="subtitle is-size-2">Disparities in Urban and Rural Areas</h3>
+              <h2 class="subtitle is-size-2">Disparities in Urban and Rural Areas</h2>
             </div>
           </div>
         </div>
       </div>
     </section>
 
-    <section class="hero is-light ">
+    <section class="hero">
       <div class="hero-body">
         <div class="container">
           <div class="columns">
@@ -48,99 +48,113 @@
       </div>
     </section>
 
-    <section>
-      <!-- Choropleth container -->
-      <div class="container has-text-centered">
-        <div class="columns">
-          <div class="column is-offset-2 is-8">
-            <h3 class="title is-size-3 has-text-left">Choropleth Map of Water Disparities Worldwide</h3>
-          </div>
-        </div>
-        <div class="columns">
-          <div class="column is-offset-3 is is-6">
-            <article class="message is-info">
-              <div class="message-header">
-                <p>Filter Options</p>>
-              </div>
-              <div class="message-body">
-                <!-- Radio buttons to select data -->
-                <label class="radio">
-                    <input type="radio" name="population" value="total" checked>
-                    Total Population
-                  </label>
-                  <label class="radio">
-                    <input type="radio" name="population" value="urban">
-                    Urban Population
-                  </label>
-                  <label class="radio">
-                    <input type="radio" name="population" value="rural">
-                    Rural Population
-                  </label>
-              </div>
-            </article>
-          </div>
-        </div>
-            
-        <div class="vis">
-          <svg id="svgMap" width="1000" height="550"></svg>
-        </div>
-      </div>
-
-      <div class="container has-text-centered">
-        <div class="columns">
-          <div class="column is-offset-2 is-8">
-            <h3 class="title is-size-3 has-text-left">Water Disparities in Selected Countries</h3>
-          </div>
-        </div>
-        <div class="columns">
-          <div class="column is-offset-1 is-4">
-            <div class="vis">
-              <svg id="svgBarChart" width="500" height="600"></svg>
+    <section class="hero is-light">
+      <div class="hero-body">
+        <!-- Choropleth container -->
+        <div class="container has-text-centered">
+          <div class="columns">
+            <div class="column is-offset-2 is-8">
+              <h3 class="title is-size-3 has-text-left">Choropleth Map of Water Disparities Worldwide</h3>
             </div>
           </div>
+          <div class="columns">
+            <div class="column is-offset-3 is is-6">
+              <article class="message is-info">
+                <div class="message-header">
+                  <p>Filter Options</p>>
+                </div>
+                <div class="message-body">
+                  <!-- Radio buttons to select data -->
+                  <label class="radio">
+                      <input type="radio" name="population" value="total" checked>
+                      Total Population
+                    </label>
+                    <label class="radio">
+                      <input type="radio" name="population" value="urban">
+                      Urban Population
+                    </label>
+                    <label class="radio">
+                      <input type="radio" name="population" value="rural">
+                      Rural Population
+                    </label>
+                </div>
+              </article>
+            </div>
+          </div>
+              
+          <div class="vis">
+            <svg id="svgMap" width="1000" height="550"></svg>
+          </div>
+        </div>
+  
+      </div>
+    </section>
 
-          <!-- Display options box -->
-          <div class="column is-offset-2 is-4">
-            <article class="message">
-              <div class="message-header">
-                <p>Display Options</p>
+    <section class="hero">
+      <div class="hero-body">
+        <!-- Bar chart container -->
+        <div class="container has-text-centered">
+          <div class="columns">
+            <div class="column is-offset-2 is-8">
+              <h3 class="title is-size-3 has-text-left">Water Disparities in Selected Countries</h3>
+            </div>
+          </div>
+          <div class="columns">
+            <div class="column is-offset-1 is-4">
+              <div class="vis">
+                <svg id="svgBarChart" width="500" height="600"></svg>
               </div>
-              <div class="message-body">
-                <h3 class="subtitle"></h3>
-                <h3 class="subtitle">Sort Order</h3>
-                <label class="radio">
-                  <input type="radio" name="sort" value="descending" checked>
-                  Ascending
-                </label>
-                <label class="radio">
-                  <input type="radio" name="sort" value="descending">
-                  Descending
-                </label>
-
-                <h3 class="subtitle">Number of Countries</h3>
-                <input class="input" type="number" value="25" min="1" max="25">
-
-                <h3 class="subtitle">Population Type</h3>
-                <label class="radio">
-                  <input type="radio" name="population-type" value="total" checked>
-                  Total
-                </label>
-                <label class="radio">
-                  <input type="radio" name="population-type" value="urban">
-                  Urban
-                </label>
-                <label class="radio">
-                  <input type="radio" name="population-type" value="rural">
-                  Rural
-                </label>
-
-                <button class="button is-info">Update Graph</button>
-                        
-              </div>
-            </article>
+            </div>
+  
+            <!-- Display options box -->
+            <div class="column is-offset-2 is-4">
+              <article class="message">
+                <div class="message-header">
+                  <p>Display Options</p>
+                </div>
+                <div class="message-body">
+                  <p class="is-size-5">Sort Order</p>
+                  <label class="radio">
+                    <input type="radio" name="sort" value="descending" checked>
+                    Ascending
+                  </label>
+                  <label class="radio">
+                    <input type="radio" name="sort" value="descending">
+                    Descending
+                  </label>
+                  <br><br>
+  
+                  <p class="is-size-5">Number of Countries</p>
+                  <div class="columns">
+                    <div class="column is-offset-4 is-4">
+                        <input class="input" type="number" value="25" min="1" max="25" size="2">
+                    </div>
+                  </div>
+  
+                  <p class="is-size-5">Population Type</p>
+                  <label class="radio">
+                    <input type="radio" name="population-type" value="total" checked>
+                    Total
+                  </label>
+                  <label class="radio">
+                    <input type="radio" name="population-type" value="urban">
+                    Urban
+                  </label>
+                  <label class="radio">
+                    <input type="radio" name="population-type" value="rural">
+                    Rural
+                  </label>
+                  <br><br>
+  
+                  <button class="button is-info">Update Graph</button>
+                          
+                </div>
+              </article>
+            </div>
           </div>
         </div>
       </div>
+
     </section>
 
     <script>
