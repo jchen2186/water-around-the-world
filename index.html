@@ -6,23 +6,73 @@
     
     <title>Water Quality Worldwide</title>
 
+    <!-- Bulma.io for CSS -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.7.2/css/bulma.css">
+
+    <!-- Font Awesome Icons -->
+    <script defer src="https://use.fontawesome.com/releases/v5.6.1/js/all.js" integrity="sha384-R5JkiUweZpJjELPWqttAYmYM1P3SNEJRM6ecTQF05pFFtxmCO+Y1CiUhvuDzgSVZ" crossorigin="anonymous"></script>
+
+    <!-- D3.js for visualizations -->
     <script src="https://d3js.org/d3.v4.js"></script>
     <script src="https://d3js.org/d3-scale-chromatic.v1.min.js"></script>
 
+    <!-- Custom CSS -->
     <link rel="stylesheet" href="style.css">
   </head>
   <body>
-    <div id="chart">
-      <svg width="1000" height="1500"></svg>
+    <!-- Hero with title and subtitle -->
+    <section class="hero is-info">
+      <div class="hero-body">
+        <div class="columns">
+          <div class="column is-12">
+            <div class="container content has-text-centered">
+              <!-- <i class="is-large fa fa-tint" aria-hidden="true"></i> -->
+              <h1 class="title">Water Around the World</h1>
+              <h3 class="subtitle">Disparities in Urban and Rural Areas</h3>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
 
-      <!-- Radio buttons to select data -->
-      <form id="population-type">
-        <input type="radio" name="population" value="total" checked> Total Population<br>
-        <input type="radio" name="population" value="rural"> Rural Population<br>
-        <input type="radio" name="population" value="urban"> Urban Population
-      </form>
-    </div>
+    <section>
+      <div class="container">
+        <h2 class="title">Choropleth Map of Water Disparities Worldwide</h2>
+        <div class="vis">
+          <svg id="svgMap" width="1000" height="550"></svg>
+          
+          <!-- Radio buttons to select data -->
+          <div class="container">
+            <h3 class="subtitle">Filter Options</h3>
+            <div class="control">
+              <label class="radio">
+                <input type="radio" name="population" value="total" checked>
+                Total Population
+              </label>
+              <br>
+              <label class="radio">
+                <input type="radio" name="population" value="urban">
+                Urban Population
+              </label>
+              <br>
+              <label class="radio">
+                <input type="radio" name="population" value="rural">
+                Rural Population
+              </label>
+            </div>
+          </div>
+          
+        </div>
+      </div>
+
+      <div class="container">
+        <h2 class="title">Water Disparities in Selected Countries</h2>
+        <div class="vis">
+          <svg id="svgBarChart" width="1000" height="800"></svg>
+
+        </div>
+      </div>
+    </section>
 
     <script>
       // Define any URLs needed
@@ -30,11 +80,12 @@
       var DRINKING_WATER_PERCENT_URL = "https://raw.githubusercontent.com/jchen2186/water-vis/master/data/aquastat.csv?token=AFK5w8m8-ZHURknPn35sBvRjaxNgcdGiks5cIZ0wwA%3D%3D";
       
       // Select objects from DOM
-      var svg = d3.select("svg");
-      let canvasSize = [svg.style("width"), svg.style("height")];
-      var gChart = svg.append("g");
-      var gMap = svg.append("g")
-        .attr("transform", "translate(0, 900)");
+      var svgMap = d3.select("#svgMap");
+      var gMap = svgMap.append("g")
+
+      // let canvasSize = [svg.style("width"), svg.style("height")];
+      var svgBarChart = d3.select("#svgBarChart");
+      var gChart = svgBarChart.append("g");
 
       // Load the data and create the plots
       d3.queue()
@@ -42,7 +93,7 @@
         .defer(d3.csv, DRINKING_WATER_PERCENT_URL)
         .await(createPlots);
 
-      // Acts as the main function that creates all of the plots
+      // Main function that creates all of the plots
       function createPlots(error, countries, waterData) {
         // Create chart
         createChart(gChart, waterData);
@@ -144,6 +195,38 @@
               .style("fill", "none");
             d3.selectAll(".legend").style("visibility", "hidden");
           });
+
+        // Afterwards, call updateMap() to fill countries with color
+        updateChart(g, waterData, "total");
+
+        d3.selectAll("input")
+          .on("change", function() {
+            updateChart(g, waterData, this.value)
+          });
+      }
+
+      function updateChart(g, waterData, dataType = "total") {
+        // Filter data based on the population and select top 25 descending order
+        let data = waterData.filter(function(row) {
+          if (dataType == "total") {
+            return row['Variable Name'] == "Total population with access to safe drinking-water (JMP)";
+          }
+          else if (dataType == "rural") {
+            return row['Variable Name'] == "Rural population with access to safe drinking-water (JMP)";
+          }
+          else if (dataType == "urban") {
+            return row['Variable Name'] == "Urban population with access to safe drinking-water (JMP)";
+          }
+        }).map(row => {
+          return [row['Area'],
+                  row['Variable Name'],
+                  parseInt(row['Year']),
+                  parseFloat(row['Value'])];
+        }).sort((x, y) => {
+          return d3.ascending(x[3], y[3]);
+        }).slice(0, 25);
+
+
       }
       
       // Creates the initial map, which contains the data for the total population
@@ -175,29 +258,29 @@
         // Create the legend group
         g.append("g")
           .attr("class", "legend")
-          .attr("transform", "translate(10, 500)")
+          .attr("transform", "translate(100, 500)")
           .append("text")
           .attr("class", "legend-text")
-          .attr("x", 200)
+          .attr("x", 225)
           .attr("y", -6)
           .text("Percentage of Total Population with Access to Safe Drinking Water");
         
         // Draw initial info box
         var info = g.append("g")
-          .attr("transform", "translate(600, 450)");
+          .attr("transform", "translate(600, 460)");
         
         info.append("rect")
           .attr("class", "info-box")
           .attr("x", 0)
           .attr("y", 0)
-          .attr("width", 375)
-          .attr("height", 50);
+          .attr("width", 400)
+          .attr("height", 80);
         
         info.append("text")
-          .attr("class", "info-text")
-          .text(`Hover over each country for more info.`)
-          .attr("x", 5)
-          .attr("y", 15);
+          .attr("class", "info-text initial")
+          .text(`Hover over each country for more info`)
+          .attr("x", 40)
+          .attr("y", 45);
         
         // Afterwards, call updateMap() to fill countries with color
         updateMap(g, waterData, "total");
@@ -248,7 +331,7 @@
           .domain([minValue, maxValue])
           .rangeRound([0, 500]);
         
-        let legend = d3.select(".legend");
+        let legend = d3.selectAll(".legend");
 
         // Update the countries with their color
         countries.transition()
@@ -289,26 +372,26 @@
         d3.selectAll("text.info-text").remove();
         
         var info = gMap.append("g")
-          .attr("transform", "translate(600, 450)");
+          .attr("transform", "translate(600, 460)");
         
         info.append("rect")
           .attr("class", "info-box")
           .attr("x", 0)
           .attr("y", 0)
-          .attr("width", 375)
-          .attr("height", 50);
+          .attr("width", 400)
+          .attr("height", 80);
         
         info.append("text")
           .attr("class", "info-text")
           .text(`Country: ${data[0]}`)
-          .attr("x", 5)
-          .attr("y", 15);
+          .attr("x", 10)
+          .attr("y", 30);
 
         info.append("text")
           .attr("class", "info-text")
           .text(`${data[1].slice(0, -6)}: ${data[3]}%`)
-          .attr("x", 5)
-          .attr("y", 30);
+          .attr("x", 10)
+          .attr("y", 55);
       }
     </script>
   </body>

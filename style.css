@@ -11,10 +11,17 @@ text {
 .info-box {
   fill: None;
   stroke: Black;
+  text-align: center;
 }
 
 .info-text {
+  font-size: 15px;
   fill: Black;
+}
+
+.initial {
+  font-size: 18px;
+  font-weight: bold;
 }
 
 .bar {
