@@ -35,7 +35,8 @@
       </div>
     </section>
 
-    <section class="hero">
+    <!-- Hero with Background and Purpose -->
+    <section class="hero is-light">
       <div class="hero-body">
         <div class="container">
           <div class="columns">
@@ -48,7 +49,8 @@
       </div>
     </section>
 
-    <section class="hero is-light">
+    <!-- Hero with choropleth -->
+    <section class="hero">
       <div class="hero-body">
         <!-- Choropleth container -->
         <div class="container has-text-centered">
@@ -90,7 +92,8 @@
       </div>
     </section>
 
-    <section class="hero">
+    <!-- Hero with bar chart -->
+    <section class="hero is-light">
       <div class="hero-body">
         <!-- Bar chart container -->
         <div class="container has-text-centered">
@@ -108,7 +111,7 @@
   
             <!-- Display options box -->
             <div class="column is-offset-2 is-4">
-              <article class="message">
+              <article class="message is-info">
                 <div class="message-header">
                   <p>Display Options</p>
                 </div>
@@ -207,12 +210,6 @@
           .domain(data.map(d => d[0]))
           .rangeRound([50, 550]);
         
-        // // y-axis ticks and labels
-        // g.append("g")
-        //   .attr("class", "y-axis")
-        //   .attr("transform", `translate(${xShift}, -2)`)
-        //   .call(d3.axisLeft(y));
-
         // x-axis ticks and labels on the top
         g.append("g")
           .attr("class", "x-axis")
@@ -246,71 +243,69 @@
         // Afterwards, call updateChart() to fill chart with bars
         updateChart(g, waterData);
 
-        // let updateButton = d3.select("button")
-        //   .attr("onclick", updateChart(g, waterData));
-
-        // console.log(updateButton);
-
         d3.selectAll(".chart-filter")
           .on("change", function() {
-            updateChart(g, waterData, this)
+            updateChart(g, waterData)
           });
       }
 
-      function updateChart(g, waterData, filter = "default") {
-        var helper = d3.selectAll(".chart-filter");
-        console.log(helper);
+      function updateChart(g, waterData) {
+        // Clear bars
+        // d3.selectAll("rect.bar").remove();
+        // d3.selectAll("g.tick").remove();
+
+        // Remove the previous info box
+        // d3.selectAll("rect.info-box").remove();
+        // d3.selectAll("text.info-text").remove();
+
+        let chosenOptions = function() {
+          let chartFilterElements = d3.selectAll(".chart-filter")._groups[0];
+          let options = {};
+
+          for (let i = 0; i < chartFilterElements.length; i++) {
+            let el = chartFilterElements[i];
+            if (el.type == "radio" && el.checked) {
+              options[el.name] = el.value;
+            }
+            else if (el.type == "number") {
+              options["numCountries"] = parseInt(el.value);
+            }
+          }
+          return options;
+        }
+
+        chosenOptions = chosenOptions();
 
         // Filter data based on the population and select top 25 descending order
-        let data = function() {
-          // Default options
-          if (filter == "default") {
-            return waterData.filter(row => {
-              return row["Variable Name"] == "Total population with access to safe drinking-water (JMP)";
-            }).map(row => {
-              return [row['Area'],
-                      row['Variable Name'],
-                      parseInt(row['Year']),
-                      parseFloat(row['Value'])];
-            }).sort((x, y) => {
-              return d3.ascending(x[3], y[3]);
-            }).slice(0, 25);
+        let data = waterData.filter(function(row) {
+          // First filter by population type
+          if (chosenOptions["population-type"] == "total") {
+            return row["Variable Name"] == "Total population with access to safe drinking-water (JMP)";
           }
-
-          // Sort order change
-          else if (filter.name == "sort") {
-            return waterData.filter()
+          else if (chosenOptions["population-type"] == "urban") {
+            return row["Variable Name"] == "Urban population with access to safe drinking-water (JMP)";
           }
-        }
-        // waterData.filter(function(row) {
-        //   if (filter == "default") {
+          else if (chosenOptions["population-type"] == "rural") {
+            return row["Variable Name"] == "Rural population with access to safe drinking-water (JMP)";
+          }
+        }).map(row => {
+          return [row['Area'],
+                  row['Variable Name'],
+                  parseInt(row['Year']),
+                  parseFloat(row['Value'])];
+        })
+        // Sort to the chosen option
+        .sort((x, y) => {
+          if (chosenOptions["sort"] == "ascending") {
+            return d3.ascending(x[3], y[3]);
+          }
+          else {
+            return d3.descending(x[3], y[3]);
+          }
+        })
+        // Select the number of countries as chosen
+        .slice(0, chosenOptions["numCountries"]);
 
-        //   }
-        //   if (filter.value == "total") {
-        //     return row['Variable Name'] == "Total population with access to safe drinking-water (JMP)";
-        //   }
-        //   else if (filter.value == "rural") {
-        //     return row['Variable Name'] == "Rural population with access to safe drinking-water (JMP)";
-        //   }
-        //   else if (filter.value == "urban") {
-        //     return row['Variable Name'] == "Urban population with access to safe drinking-water (JMP)";
-        //   }
-        // }).map(row => {
-        //   return [row['Area'],
-        //           row['Variable Name'],
-        //           parseInt(row['Year']),
-        //           parseFloat(row['Value'])];
-        // }).sort((x, y) => {
-        //   return d3.ascending(x[3], y[3]);
-        // }).slice(0, 25);
-
-        console.log(data());
-
-        console.log(filter);
-        console.log(filter.name);
-
-        data = data();
-        
         let xShift = 250;
         let maxValue = 100;
 
