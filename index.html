@@ -211,7 +211,6 @@
             d3.selectAll(".zip")
               .transition().duration(800)
               .style("fill", "none");
-            d3.selectAll(".legend").style("visibility", "hidden");
           });
 
         // Afterwards, call updateMap() to fill countries with color
@@ -273,15 +272,62 @@
           .attr("d", path)
           .on("mouseover", showCountryInfo);
         
+        let color = d3.scaleQuantize()
+          .domain([0, 100])
+          .range(d3.schemeBlues[9]);
+
+        let x = d3.scaleLinear()
+          .domain(d3.extent(color.domain()))
+          .rangeRound([0, 400]);
+
         // Create the legend group
-        g.append("g")
+        let legend = g.append("g")
           .attr("class", "legend")
-          .attr("transform", "translate(50, 500)")
-          .append("text")
-          .attr("class", "legend-text")
-          .attr("x", 225)
+          .attr("transform", "translate(50, 500)");
+
+        legend.selectAll("rect")
+          .data(color.range().map(d => color.invertExtent(d)))
+          .enter().append("rect")
+            .attr("class", "legend-color-box")
+            .attr("height", 5)
+            .attr("x", d => x(d[0]))
+            .attr("y", 0)
+            .attr("width", d => x(d[1]) - x(d[0]))
+            .attr("fill", d => color(d[0]));
+        
+        legend.append("text")
+          .attr("class", "legend-title")
+          .attr("x", x.range()[0])
           .attr("y", -6)
+          .attr("fill", "Black")
+          .attr("text-anchor", "start")
+          .attr("font-weight", "bold")
           .text("Percentage of Population with Access to Safe Drinking Water");
+
+        console.log(color.range())
+        legend.call(d3.axisBottom(x)
+          .tickSize(7)
+          .tickFormat(d3.format(".1s"))
+          .tickValues(color.range()
+            .map(d => color.invertExtent(d)[0])))
+          .select(".domain")
+          .remove();
+
+        // Draw last tick
+        let lastTick = legend.append("g")
+          .attr("class", "tick")
+          .attr("opacity", 1)
+          .attr("transform", "translate(400, 0)");
+
+        lastTick.append("line")
+          .attr("stroke", "#000")
+          .attr("y2", 7);
+        
+        lastTick.append("text")
+          .attr("fill", "#000")
+          .attr("y", 10)
+          .attr("dy", "0.71em")
+          .text("100");
         
         // Draw initial info box
         var info = g.append("g")
@@ -330,14 +376,12 @@
                   parseFloat(row['Value'])];
         });
 
-        let minValue = d3.min(data, d => d[3]);
-        minValue = 0;
-        let maxValue = d3.max(data, d => d[3]) + 14;
-        let steps = 8;
+        let minValue = 0;
+        let maxValue = 100;
+        let steps = 9;
         
         let color = d3.scaleThreshold()
-        // let color = d3.scaleQuantize()
-          .domain(d3.range(minValue, maxValue, maxValue / steps))
+          .domain(d3.range(0, maxValue, maxValue / steps))
           .range(d3.schemeBlues[steps]);
         
         let countries = g.selectAll(".country")
@@ -354,30 +398,30 @@
           .duration(300)
           .style("fill", d => color(d[3]));
         
-        // Update the legend
-        let boxes = legend.selectAll("rect")
-          .data(color.range().map(function(d) {
-            d = color.invertExtent(d);
-            if (d[0]==null) d[0] = x.domain()[0];
-            if (d[1]==null) d[1] = x.domain()[1];
-            return d;
-          }));
+        // // Update the legend
+        // let boxes = legend.selectAll("rect")
+        //   .data(color.range().map(function(d) {
+        //     d = color.invertExtent(d);
+        //     if (d[0]==null) d[0] = x.domain()[0];
+        //     if (d[1]==null) d[1] = x.domain()[1];
+        //     return d;
+        //   }));
 
-        boxes.enter()
-          .append("rect")
-          .merge(boxes)
-            .attr("height", 6)
-            .attr("x", d => x(d[0]))
-            .attr("width", d => (x(d[1]) - x(d[0])))
-            .attr("fill", d => color(d[0]));
+        // boxes.enter()
+        //   .append("rect")
+        //   .merge(boxes)
+        //     .attr("height", 6)
+        //     .attr("x", d => x(d[0]))
+        //     .attr("width", d => (x(d[1]) - x(d[0])))
+        //     .attr("fill", d => color(d[0]));
 
-        // Update the tick values
-        legend.call(d3.axisBottom(x)
-          .ticks(steps, "s")
-          .tickSize(10,0)
-          .tickValues(color.domain()))
-          .select(".domain")
-            .remove();
+        // // Update the tick values
+        // legend.call(d3.axisBottom(x)
+        //   .ticks(steps, "s")
+        //   .tickSize(10,0)
+        //   .tickValues(color.domain()))
+        //   .select(".domain")
+        //     .remove();
         
         // Remove the previous info box
         d3.selectAll("rect.info-box").remove();
