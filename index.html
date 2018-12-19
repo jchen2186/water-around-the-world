@@ -250,14 +250,6 @@
       }
 
       function updateChart(g, waterData) {
-        // Clear bars
-        // d3.selectAll("rect.bar").remove();
-        // d3.selectAll("g.tick").remove();
-
-        // Remove the previous info box
-        // d3.selectAll("rect.info-box").remove();
-        // d3.selectAll("text.info-text").remove();
-
         let chosenOptions = function() {
           let chartFilterElements = d3.selectAll(".chart-filter")._groups[0];
           let options = {};
@@ -318,11 +310,17 @@
           .domain(data.map(d => d[0]))
           .rangeRound([50, 550]);
 
+        // Clear previous y-axis if any
+        d3.selectAll("g.y-axis").remove();
+
         // y-axis ticks and labels
         g.append("g")
           .attr("class", "y-axis")
           .attr("transform", `translate(${xShift}, -2)`)
           .call(d3.axisLeft(y));
+
+        // Remove previous bars
+        d3.selectAll(".bar").remove();
 
         // Add bars for each country and mouseover, mouseout, mousemove transitions
         g.selectAll(".bar")
@@ -332,7 +330,7 @@
             .attr("x", xShift)
             .attr("y", d => y(d[0]))
             .attr("width", d => x(d[3]))
-            .attr("height", 18)
+            .attr("height", (y.range()[1] - 100) / chosenOptions["numCountries"])
             .on("mouseover", function(d) {
               d3.select(this)
                 .transition().ease(d3.easeBounce).duration(500)
@@ -347,7 +345,7 @@
                 .attr("x", xShift)
                 .attr("y", d => y(d[0]))
                 .attr("width", d => x(d[3]))
-                .attr("height", 18);
+                .attr("height", (y.range()[1] - 100) / chosenOptions["numCountries"]);
             });
       }
       
