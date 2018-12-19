@@ -130,7 +130,7 @@
                   <p class="is-size-5">Number of Countries</p>
                   <div class="columns">
                     <div class="column is-offset-4 is-4">
-                        <input class="chart-filter input" type="number" value="25" min="1" max="25" size="2">
+                        <input class="chart-filter input" type="number" value="25" min="5" max="45" size="2">
                     </div>
                   </div>
   
@@ -146,6 +146,12 @@
                   <label class="radio">
                     <input class="chart-filter" type="radio" name="population-type" value="rural">
                     Rural
+                  </label>
+                  <br><br>
+
+                  <label class="checkbox">
+                    <input class="chart-filter" type="checkbox" name="100-percent" checked>
+                    Include countries with 100% access to safe drinking water
                   </label>
                   <br><br>
                 </div>
@@ -263,6 +269,9 @@
           else if (el.type == "number") {
             options["numCountries"] = parseInt(el.value);
           }
+          else if (el.type == "checkbox") {
+            options[el.name] = el.checked;
+          }
         }
         return options;
       }
@@ -270,18 +279,34 @@
       // Helper function to get the filtered data based on the Display Options box
       function getUpdatedData(g, waterData) {
         let options = getChosenOptions();
+        let populationType = options["population-type"];
+        let include100Percent = options["100-percent"];
 
         // Filter data based on the population and select top 25 descending order
         let data = waterData.filter(function(row) {
-          // First filter by population type
-          if (options["population-type"] == "total") {
-            return row["Variable Name"] == "Total population with access to safe drinking-water (JMP)";
+          if (include100Percent) {
+            // Filter by population type
+            if (populationType == "total") {
+              return row["Variable Name"] == "Total population with access to safe drinking-water (JMP)";
+            }
+            else if (populationType == "urban") {
+              return row["Variable Name"] == "Urban population with access to safe drinking-water (JMP)";
+            }
+            else if (populationType == "rural") {
+              return row["Variable Name"] == "Rural population with access to safe drinking-water (JMP)";
+            }
           }
-          else if (options["population-type"] == "urban") {
-            return row["Variable Name"] == "Urban population with access to safe drinking-water (JMP)";
-          }
-          else if (options["population-type"] == "rural") {
-            return row["Variable Name"] == "Rural population with access to safe drinking-water (JMP)";
+          else {
+            // Filter by population type, keeping only the ones that do not have 100%
+            if (populationType == "total") {
+              return row["Variable Name"] == "Total population with access to safe drinking-water (JMP)" && row["Value"] != "100";
+            }
+            else if (populationType == "urban") {
+              return row["Variable Name"] == "Urban population with access to safe drinking-water (JMP)" && row["Value"] != "100";
+            }
+            else if (populationType == "rural") {
+              return row["Variable Name"] == "Rural population with access to safe drinking-water (JMP)" && row["Value"] != "100";
+            }
           }
         }).map(row => {
           return [row['Area'],
@@ -301,6 +326,7 @@
         // Select the number of countries as chosen
         .slice(0, options["numCountries"]);
 
+        console.log(data);
         return data;
       }
 
@@ -340,23 +366,7 @@
             .attr("x", xShift)
             .attr("y", d => y(d[0]))
             .attr("width", d => x(d[3]))
-            .attr("height", (y.range()[1] - 100) / options["numCountries"])
-            .on("mouseover", function(d) {
-              d3.select(this)
-                .transition().ease(d3.easeBounce).duration(500)
-                .attr("x", xShift - 8)
-                .attr("y", d => y(d[0]) - 2)
-                .attr("width", d => x(d[3]) + 16)
-                .attr("height", y.bandwidth() + 2);
-            })
-            .on("mouseout", function(d) {
-              d3.select(this)
-                .transition().duration(300)
-                .attr("x", xShift)
-                .attr("y", d => y(d[0]))
-                .attr("width", d => x(d[3]))
-                .attr("height", (y.range()[1] - 100) / options["numCountries"]);
-            });
+            .attr("height", (y.range()[1] - 100) / options["numCountries"]);
       }
       
       // Creates the initial map, which contains the data for the total population
