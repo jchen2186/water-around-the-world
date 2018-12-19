@@ -6,14 +6,22 @@
     
     <title>Water Quality Worldwide</title>
 
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.7.2/css/bulma.css">
     <script src="https://d3js.org/d3.v4.js"></script>
     <script src="https://d3js.org/d3-scale-chromatic.v1.min.js"></script>
 
-    <link rel="stylesheet" href="./style.css">
+    <link rel="stylesheet" href="style.css">
   </head>
   <body>
     <div id="chart">
-      <svg width="1000" height="600"></svg>
+      <svg width="1000" height="1000"></svg>
+
+      <!-- Radio buttons to select data -->
+      <form>
+        <input type="radio" name="population" value="total" checked> Total Population<br>
+        <input type="radio" name="population" value="rural"> Rural Population<br>
+        <input type="radio" name="population" value="urban"> Urban Population
+      </form>
     </div>
 
     <script>
@@ -23,105 +31,68 @@
       
       // Select objects from DOM
       var svg = d3.select("svg");
-      var g = svg.append("g");
+      var gChart = svg.append("g");
+      var gMap = svg.append("g")
+        .attr("transform", "translate(0, 400)");
 
-      // Load the world map
+      // Load the data and create the plots
       d3.queue()
         .defer(d3.json, GLOBAL_MAP_URL)
-        .await(createMap);
-      
-      function createMap(error, countries) {
-        var canvasSize = [svg.style("width"), svg.style("height")];
+        .defer(d3.csv, DRINKING_WATER_PERCENT_URL)
+        .await(createPlots);
 
-        var projection = d3.geoMercator();
-          // .scale(110)
-          // .translate([canvasSize[0] / 2, canvasSize[1] / 2]);
-        
-        var path = d3.geoPath()
-          .projection(projection);
-        
-        var countries = g.selectAll(".country")
-          .data(countries.features);
-        
-        countries.enter().append("path")
-          .attr("class", "country")
-          .attr("d", path)
-          .on("mouseover", showCountryInfo);
+      // Acts as the main function that creates all of the plots
+      function createPlots(error, countries, waterData) {
+        // Create chart
+        createChart(gChart, gMap, waterData);
+
+        // Create the map
+        createMap(gMap, countries, waterData);
       }
 
-      // Fill in colors in the map based on data
-      d3.csv(DRINKING_WATER_PERCENT_URL, function(error, data) {
-        var percent_drinking_water = data.filter(function(row) {
+      // Creates the initial bar charts
+      function createChart(g, gMap, waterData) {
+        console.log();
+      }
+      
+      // Creates the initial map, 
+      // which contains the data for the total population
+      function createMap(g, countries, waterData) {
+        let data = waterData.filter(function(row) {
           return row['Variable Name'] == "Total population with access to safe drinking-water (JMP)";
-        })
-        .map(function(row) {
+        }).map(row => {
           return [row['Area'],
                   row['Variable Name'],
                   parseInt(row['Year']),
                   parseFloat(row['Value'])];
-        })
+        });
 
-        colorMap(percent_drinking_water);
-      })
+        let canvasSize = [svg.style("width"), svg.style("height")];
 
-      function colorMap(data) {
-        // console.log(data);
-
-        var minValue = d3.min(data, d => d[3]);
-        var maxValue = d3.max(data, d => d[3]);
-        var minValue = 30;
-        var maxValue = 100;
-        var steps = 5;
-
-        var color = d3.scaleThreshold()
-          .domain(d3.range(minValue, maxValue, maxValue / steps))
-          .range(d3.schemeBlues[steps]);
-
-        // Connect country name from geojson with country name from data set
+        let projection = d3.geoMercator();
+        
+        let path = d3.geoPath()
+          .projection(projection);
+        
+        // Draw outlines of the countries
         var countries = g.selectAll(".country")
-          .data(data, d => d.properties ? d.properties.name : d[0])
-          .style("fill", d => color(d[3]));
-
-        // Add legend for the scale
-        var x = d3.scaleLinear()
-          .domain([minValue, maxValue])
-          .rangeRound([0, 400]);
-
+          .data(countries.features);
+        
+        countries.enter()
+          .append("path")
+          .attr("class", "country")
+          .attr("d", path)
+          .on("mouseover", showCountryInfo);
+        
+        // Create the legend group
         g.append("g")
           .attr("class", "legend")
-          .attr("transform", "translate(75, 475)")
+          .attr("transform", "translate(10, 500)")
           .append("text")
-          .attr("class", "axis--map--caption")
+          .attr("class", "legend-text")
           .attr("x", 200)
           .attr("y", -6)
-          .text("Percentage of Population with Access to Safe Drinking Water");          ;
-
-        let legend = d3.select(".legend");
-
-        let boxes = legend.selectAll("rect")
-          .data(color.range().map(function(d) {
-            d = color.invertExtent(d);
-            if (d[0]==null) d[0] = x.domain()[0];
-            if (d[1]==null) d[1] = x.domain()[1];
-            return d;
-          }));
-
-        // We then create/update all boxes to the appropriate size and color
-        boxes
-          .enter().append("rect")
-          .merge(boxes)
-            .attr("height", 6)
-            .attr("x", d => x(d[0]))
-            .attr("width", d => (x(d[1]) - x(d[0])))
-            .attr("fill", d => color(d[0]));
-
-        // Update the tick values
-        legend.call(d3.axisBottom(x)
-            .ticks(steps, "s")
-            .tickSize(10, 0)
-            .tickValues(color.domain()))
-          .select(".domain")
-            .remove();
+          .text("Percentage of Population with Access to Safe Drinking Water");
         
         // Draw initial info box
         var info = g.append("g")
@@ -139,6 +110,77 @@
           .text(`Hover over each country for more info!`)
           .attr("x", 5)
           .attr("y", 15);
+        
+        // Afterwards, call updateMap() to fill countries with color
+        updateMap(g, waterData, "total");
+      }
+
+      function updateMap(g, waterData, dataType) {
+        // Filter data based on the population
+        let data = waterData.filter(function(row) {
+          if (dataType == "total") {
+            return row['Variable Name'] == "Total population with access to safe drinking-water (JMP)";
+          }
+          else if (dataType == "rural") {
+            return row['Variable Name'] == "Rural population with access to safe drinking-water (JMP)";
+          }
+          else if (dataType == "urban") {
+            return row['Variable Name'] == "Urban population with access to safe drinking-water (JMP)";
+          }
+        }).map(row => {
+          return [row['Area'],
+                  row['Variable Name'],
+                  parseInt(row['Year']),
+                  parseFloat(row['Value'])];
+        });
+
+        let minValue = d3.min(data, d => d[3]);
+        let maxValue = d3.max(data, d => d[3]);
+        let steps = 5;
+        
+        let color = d3.scaleThreshold()
+          .domain(d3.range(minValue, maxValue, maxValue / steps))
+          .range(d3.schemeBlues[steps]);
+        
+        let countries = g.selectAll(".country")
+          .data(data, d => d.properties ? d.properties.name : d[0]);
+
+        let x = d3.scaleLinear()
+          .domain([minValue, maxValue])
+          .rangeRound([0, 500]);
+        
+        let legend = d3.select(".legend");
+
+        // Update the countries with their color
+        countries
+          .transition()
+          .duration(300)
+          .style("fill", d => color(d[3]));
+        
+        // Update the legend
+        let boxes = legend.selectAll("rect")
+          .data(color.range().map(function(d) {
+            d = color.invertExtent(d);
+            if (d[0]==null) d[0] = x.domain()[0];
+            if (d[1]==null) d[1] = x.domain()[1];
+            return d;
+          }));
+
+        boxes.enter()
+          .append("rect")
+          .merge(boxes)
+            .attr("height", 6)
+            .attr("x", d => x(d[0]))
+            .attr("width", d => (x(d[1]) - x(d[0])))
+            .attr("fill", d => color(d[0]));
+
+        // Update the tick values
+        legend.call(d3.axisBottom(x)
+          .ticks(steps, "s")
+          .tickSize(10,0)
+          .tickValues(color.domain()))
+          .select(".domain")
+            .remove();
       }
 
       function showCountryInfo(data) {
@@ -146,7 +188,7 @@
         d3.selectAll("rect.info-box").remove();
         d3.selectAll("text.info-text").remove();
         
-        var info = g.append("g")
+        var info = gMap.append("g")
           .attr("transform", "translate(600, 450)");
         
         info.append("rect")
@@ -167,7 +209,6 @@
           .text(`${data[1].slice(0, -6)}: ${data[3]}`)
           .attr("x", 5)
           .attr("y", 30);
-          
       }
     </script>
   </body>
