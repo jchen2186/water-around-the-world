@@ -25,12 +25,12 @@ text {
 }
 
 .bar {
-  fill: SteelBlue;
-  stroke: Black;
+  fill: #08519c;
+  stroke: White;
 }
 
 .bar:hover {
-  fill: Salmon;
+  fill: #08306b;
 }
 
 .x-axis path,
@@ -38,9 +38,9 @@ text {
   display: none;
 }
 
-.label {
+.x-label {
   fill: Black;
-  font-size: 18px;
+  font-size: 12px;
 }
 
 .grid line {

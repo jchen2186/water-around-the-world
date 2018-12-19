@@ -66,15 +66,15 @@
                 <div class="message-body">
                   <!-- Radio buttons to select data -->
                   <label class="radio">
-                      <input type="radio" name="population" value="total" checked>
+                      <input class="map-filter" type="radio" name="population" value="total" checked>
                       Total Population
                     </label>
                     <label class="radio">
-                      <input type="radio" name="population" value="urban">
+                      <input class="map-filter" type="radio" name="population" value="urban">
                       Urban Population
                     </label>
                     <label class="radio">
-                      <input type="radio" name="population" value="rural">
+                      <input class="map-filter" type="radio" name="population" value="rural">
                       Rural Population
                     </label>
                 </div>
@@ -115,11 +115,11 @@
                 <div class="message-body">
                   <p class="is-size-5">Sort Order</p>
                   <label class="radio">
-                    <input type="radio" name="sort" value="descending" checked>
+                    <input class="chart-filter" type="radio" name="sort" value="ascending" checked>
                     Ascending
                   </label>
                   <label class="radio">
-                    <input type="radio" name="sort" value="descending">
+                    <input class="chart-filter" type="radio" name="sort" value="descending">
                     Descending
                   </label>
                   <br><br>
@@ -127,27 +127,24 @@
                   <p class="is-size-5">Number of Countries</p>
                   <div class="columns">
                     <div class="column is-offset-4 is-4">
-                        <input class="input" type="number" value="25" min="1" max="25" size="2">
+                        <input class="chart-filter input" type="number" value="25" min="1" max="25" size="2">
                     </div>
                   </div>
   
                   <p class="is-size-5">Population Type</p>
                   <label class="radio">
-                    <input type="radio" name="population-type" value="total" checked>
+                    <input class="chart-filter" type="radio" name="population-type" value="total" checked>
                     Total
                   </label>
                   <label class="radio">
-                    <input type="radio" name="population-type" value="urban">
+                    <input class="chart-filter" type="radio" name="population-type" value="urban">
                     Urban
                   </label>
                   <label class="radio">
-                    <input type="radio" name="population-type" value="rural">
+                    <input class="chart-filter" type="radio" name="population-type" value="rural">
                     Rural
                   </label>
                   <br><br>
-  
-                  <button class="button is-info">Update Graph</button>
-                          
                 </div>
               </article>
             </div>
@@ -199,7 +196,6 @@
         }).slice(0, 25);
 
         let maxValue = 100;
-
         let xShift = 250;
         
         // Generate x and y scaling for bar chart
@@ -227,18 +223,18 @@
         
         // x-axis ticks and labels on the bottom with the title of x-axis
         g.append("g")
-          .attr("class", "axis--x")
+          .attr("class", "x-axis")
           .attr("transform", `translate(${xShift}, 550)`)
           .call(d3.axisBottom(x)
             .ticks(4)
             .tickFormat(d3.format(".2s")))
           .append("text")
-            .attr("id", "x-label")
-            .attr("x", xShift / 3 * 2)
-            .attr("y", 50)
-            .text("Percentage");
+            .attr("class", "x-label")
+            .attr("x", 100)
+            .attr("y", 40)
+            .text("% of Population with Access to Safe Drinking Water");
 
-        // add vertical grid lines
+        // Add vertical grid lines
         g.append("g")
           .attr("class", "grid x-axis")
           .attr("transform", `translate(${xShift}, 50)`)
@@ -246,47 +242,25 @@
             .ticks(4)
             .tickSize(-500)
             .tickFormat(""));
-
-        // add bars for each cuisine and mouseover, mouseout, mousemove transitions
-        g.selectAll(".bar")
-        .data(data)
-        .enter().append("rect")
-          .attr("class", "bar")
-          .attr("x", xShift)
-          .attr("y", d => y(d[0]))
-          .attr("width", d => x(d[3]))
-          .attr("height", 18)
-          .on("mouseover", function(d) {
-            d3.select(this)
-              .transition().ease(d3.easeBounce).duration(500)
-              .attr("x", xShift - 8)
-              .attr("y", d => y(d[0]) - 2)
-              .attr("width", d => x(d[3]) + 16)
-              .attr("height", y.bandwidth() + 2);
-            updateMap(d);
-          })
-          .on("mouseout", function(d) {
-            d3.select(this)
-              .transition().duration(300)
-              .attr("x", xShift)
-              .attr("y", d => y(d[0]))
-              .attr("width", d => x(d[3]))
-              .attr("height", 18);
-            d3.selectAll(".zip")
-              .transition().duration(800)
-              .style("fill", "none");
-          });
-
-        // Afterwards, call updateMap() to fill countries with color
+        
+        
+        // Afterwards, call updateChart() to fill chart with bars
         updateChart(g, waterData, "total");
 
-        d3.selectAll("input")
+        // let updateButton = d3.select("button")
+        //   .attr("onclick", updateChart(g, waterData));
+
+        // console.log(updateButton);
+
+        d3.selectAll(".chart-filter")
           .on("change", function() {
             updateChart(g, waterData, this.value)
           });
       }
 
       function updateChart(g, waterData, dataType = "total") {
+        console.log(dataType);
+
         // Filter data based on the population and select top 25 descending order
         let data = waterData.filter(function(row) {
           if (dataType == "total") {
@@ -306,8 +280,44 @@
         }).sort((x, y) => {
           return d3.ascending(x[3], y[3]);
         }).slice(0, 25);
+        
+        let xShift = 250;
+        let maxValue = 100;
 
+        // Generate x and y scaling for bar chart
+        let x = d3.scaleLinear()
+          .domain([0, maxValue])
+          .rangeRound([0, 200]);
+        
+        let y = d3.scaleBand()
+          .domain(data.map(d => d[0]))
+          .rangeRound([50, 550]);
 
+        // Add bars for each country and mouseover, mouseout, mousemove transitions
+        g.selectAll(".bar")
+          .data(data)
+          .enter().append("rect")
+            .attr("class", "bar")
+            .attr("x", xShift)
+            .attr("y", d => y(d[0]))
+            .attr("width", d => x(d[3]))
+            .attr("height", 18)
+            .on("mouseover", function(d) {
+              d3.select(this)
+                .transition().ease(d3.easeBounce).duration(500)
+                .attr("x", xShift - 8)
+                .attr("y", d => y(d[0]) - 2)
+                .attr("width", d => x(d[3]) + 16)
+                .attr("height", y.bandwidth() + 2);
+            })
+            .on("mouseout", function(d) {
+              d3.select(this)
+                .transition().duration(300)
+                .attr("x", xShift)
+                .attr("y", d => y(d[0]))
+                .attr("width", d => x(d[3]))
+                .attr("height", 18);
+            });
       }
       
       // Creates the initial map, which contains the data for the total population
@@ -368,7 +378,6 @@
           .attr("font-weight", "bold")
           .text("Percentage of Population with Access to Safe Drinking Water");
 
-        console.log(color.range())
         legend.call(d3.axisBottom(x)
           .tickSize(7)
           .tickFormat(d3.format(".1s"))
@@ -414,7 +423,7 @@
         // Afterwards, call updateMap() to fill countries with color
         updateMap(g, waterData, "total");
 
-        d3.selectAll("input")
+        d3.selectAll(".map-filter")
           .on("change", function() {
             updateMap(g, waterData, this.value)
           });
