@@ -26,8 +26,8 @@ text {
   fill: Salmon;
 }
 
-.axis--x path,
-.axis--y path {
+.x-axis path,
+.y-axis path {
   display: none;
 }
 

@@ -31,6 +31,7 @@
       
       // Select objects from DOM
       var svg = d3.select("svg");
+      let canvasSize = [svg.style("width"), svg.style("height")];
       var gChart = svg.append("g");
       var gMap = svg.append("g")
         .attr("transform", "translate(0, 900)");
@@ -44,15 +45,105 @@
       // Acts as the main function that creates all of the plots
       function createPlots(error, countries, waterData) {
         // Create chart
-        createChart(gChart, gMap, waterData);
+        createChart(gChart, waterData);
 
         // Create the map
         createMap(gMap, countries, waterData);
       }
 
       // Creates the initial bar charts
-      function createChart(g, gMap, waterData) {
-        console.log();
+      function createChart(g, waterData) {
+        let data = waterData.filter(function(row) {
+          return row['Variable Name'] == "Total population with access to safe drinking-water (JMP)";
+        }).map(row => {
+          return [row['Area'],
+                  row['Variable Name'],
+                  parseInt(row['Year']),
+                  parseFloat(row['Value'])];
+        }).sort((x, y) => {
+          return d3.ascending(x[3], y[3]);
+        }).slice(0, 25);
+
+        let maxValue = d3.max(data, d => d[3]);
+
+        let xShift = 250;
+        // console.log(maxValue);
+        
+        // Generate x and y scaling for bar chart
+        let x = d3.scaleLinear()
+          .domain([0, maxValue])
+          .rangeRound([0, 300]);
+        
+        let y = d3.scaleBand()
+          .domain(data.map(d => d[0]))
+          .rangeRound([50, 550]);
+        
+        // y-axis ticks and labels
+        g.append("g")
+          .attr("class", "y-axis")
+          .attr("transform", `translate(${xShift}, -2)`)
+          .call(d3.axisLeft(y));
+
+        // x-axis ticks and labels on the top
+        g.append("g")
+          .attr("class", "x-axis")
+          .attr("transform", `translate(${xShift}, 50)`)
+          .call(d3.axisTop(x)
+            .ticks(4)
+            .tickFormat(d3.format(".2s")));
+        
+        // x-axis ticks and labels on the bottom with the title of x-axis
+        g.append("g")
+          .attr("class", "axis--x")
+          .attr("transform", `translate(${xShift}, 550)`)
+          .call(d3.axisBottom(x)
+            .ticks(4)
+            .tickFormat(d3.format(".2s")))
+          .append("text")
+            .attr("id", "x-label")
+            .attr("x", xShift / 3 * 2)
+            .attr("y", 50)
+            .text("Percentage");
+
+        // add vertical grid lines
+        g.append("g")
+          .attr("class", "grid x-axis")
+          .attr("transform", `translate(${xShift}, 50)`)
+          .call(d3.axisTop(x)
+            .ticks(4)
+            .tickSize(-500)
+            .tickFormat(""));
+
+        // add bars for each cuisine and mouseover, mouseout, mousemove transitions
+        g.selectAll(".bar")
+        .data(data)
+        .enter().append("rect")
+          .attr("class", "bar")
+          .attr("x", xShift)
+          .attr("y", d => y(d[0]))
+          .attr("width", d => x(d[3]))
+          .attr("height", 18)
+          .on("mouseover", function(d) {
+            d3.select(this)
+              .transition().ease(d3.easeBounce).duration(500)
+              .attr("x", xShift - 8)
+              .attr("y", d => y(d[0]) - 2)
+              .attr("width", d => x(d[3]) + 16)
+              .attr("height", y.bandwidth() + 2);
+            updateMap(d);
+          })
+          .on("mouseout", function(d) {
+            d3.select(this)
+              .transition().duration(300)
+              .attr("x", xShift)
+              .attr("y", d => y(d[0]))
+              .attr("width", d => x(d[3]))
+              .attr("height", 18);
+            d3.selectAll(".zip")
+              .transition().duration(800)
+              .style("fill", "none");
+            d3.selectAll(".legend").style("visibility", "hidden");
+          });
       }
       
       // Creates the initial map, which contains the data for the total population
@@ -65,8 +156,6 @@
                   parseInt(row['Year']),
                   parseFloat(row['Value'])];
         });
-
-        let canvasSize = [svg.style("width"), svg.style("height")];
 
         let projection = d3.geoMercator();
         
@@ -91,7 +180,7 @@
           .attr("class", "legend-text")
           .attr("x", 200)
           .attr("y", -6)
-          .text("Percentage of Population with Access to Safe Drinking Water");
+          .text("Percentage of Total Population with Access to Safe Drinking Water");
         
         // Draw initial info box
         var info = g.append("g")
@@ -140,10 +229,15 @@
         });
 
         let minValue = d3.min(data, d => d[3]);
+        minValue = 0;
         let maxValue = d3.max(data, d => d[3]);
-        let steps = 5;
+        let steps = 9;
+
+        console.log(minValue);
+        console.log(maxValue);
         
         let color = d3.scaleThreshold()
+        // let color = d3.scaleQuantize()
           .domain(d3.range(minValue, maxValue, maxValue / steps))
           .range(d3.schemeBlues[steps]);
         
@@ -185,6 +279,8 @@
           .tickValues(color.domain()))
           .select(".domain")
             .remove();
+        
+        
       }
 
       function showCountryInfo(data) {
