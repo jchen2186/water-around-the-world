@@ -207,11 +207,11 @@
           .domain(data.map(d => d[0]))
           .rangeRound([50, 550]);
         
-        // y-axis ticks and labels
-        g.append("g")
-          .attr("class", "y-axis")
-          .attr("transform", `translate(${xShift}, -2)`)
-          .call(d3.axisLeft(y));
+        // // y-axis ticks and labels
+        // g.append("g")
+        //   .attr("class", "y-axis")
+        //   .attr("transform", `translate(${xShift}, -2)`)
+        //   .call(d3.axisLeft(y));
 
         // x-axis ticks and labels on the top
         g.append("g")
@@ -243,9 +243,8 @@
             .tickSize(-500)
             .tickFormat(""));
         
-        
         // Afterwards, call updateChart() to fill chart with bars
-        updateChart(g, waterData, "total");
+        updateChart(g, waterData);
 
         // let updateButton = d3.select("button")
         //   .attr("onclick", updateChart(g, waterData));
@@ -254,32 +253,63 @@
 
         d3.selectAll(".chart-filter")
           .on("change", function() {
-            updateChart(g, waterData, this.value)
+            updateChart(g, waterData, this)
           });
       }
 
-      function updateChart(g, waterData, dataType = "total") {
-        console.log(dataType);
+      function updateChart(g, waterData, filter = "default") {
+        var helper = d3.selectAll(".chart-filter");
+        console.log(helper);
 
         // Filter data based on the population and select top 25 descending order
-        let data = waterData.filter(function(row) {
-          if (dataType == "total") {
-            return row['Variable Name'] == "Total population with access to safe drinking-water (JMP)";
+        let data = function() {
+          // Default options
+          if (filter == "default") {
+            return waterData.filter(row => {
+              return row["Variable Name"] == "Total population with access to safe drinking-water (JMP)";
+            }).map(row => {
+              return [row['Area'],
+                      row['Variable Name'],
+                      parseInt(row['Year']),
+                      parseFloat(row['Value'])];
+            }).sort((x, y) => {
+              return d3.ascending(x[3], y[3]);
+            }).slice(0, 25);
           }
-          else if (dataType == "rural") {
-            return row['Variable Name'] == "Rural population with access to safe drinking-water (JMP)";
+
+          // Sort order change
+          else if (filter.name == "sort") {
+            return waterData.filter()
           }
-          else if (dataType == "urban") {
-            return row['Variable Name'] == "Urban population with access to safe drinking-water (JMP)";
-          }
-        }).map(row => {
-          return [row['Area'],
-                  row['Variable Name'],
-                  parseInt(row['Year']),
-                  parseFloat(row['Value'])];
-        }).sort((x, y) => {
-          return d3.ascending(x[3], y[3]);
-        }).slice(0, 25);
+        }
+        // waterData.filter(function(row) {
+        //   if (filter == "default") {
+
+        //   }
+        //   if (filter.value == "total") {
+        //     return row['Variable Name'] == "Total population with access to safe drinking-water (JMP)";
+        //   }
+        //   else if (filter.value == "rural") {
+        //     return row['Variable Name'] == "Rural population with access to safe drinking-water (JMP)";
+        //   }
+        //   else if (filter.value == "urban") {
+        //     return row['Variable Name'] == "Urban population with access to safe drinking-water (JMP)";
+        //   }
+        // }).map(row => {
+        //   return [row['Area'],
+        //           row['Variable Name'],
+        //           parseInt(row['Year']),
+        //           parseFloat(row['Value'])];
+        // }).sort((x, y) => {
+        //   return d3.ascending(x[3], y[3]);
+        // }).slice(0, 25);
+
+        console.log(data());
+
+        console.log(filter);
+        console.log(filter.name);
+
+        data = data();
         
         let xShift = 250;
         let maxValue = 100;
@@ -292,6 +322,12 @@
         let y = d3.scaleBand()
           .domain(data.map(d => d[0]))
           .rangeRound([50, 550]);
+
+        // y-axis ticks and labels
+        g.append("g")
+          .attr("class", "y-axis")
+          .attr("transform", `translate(${xShift}, -2)`)
+          .call(d3.axisLeft(y));
 
         // Add bars for each country and mouseover, mouseout, mousemove transitions
         g.selectAll(".bar")
