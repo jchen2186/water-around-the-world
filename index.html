@@ -8,6 +8,8 @@
 
     <!-- Bulma.io for CSS -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.7.2/css/bulma.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma-extensions@4.0.0/bulma-slider/dist/css/bulma-slider.min.css">
+    <script src="bulmaextension.js"></script>
 
     <!-- Font Awesome Icons -->
     <script defer src="https://use.fontawesome.com/releases/v5.6.1/js/all.js" integrity="sha384-R5JkiUweZpJjELPWqttAYmYM1P3SNEJRM6ecTQF05pFFtxmCO+Y1CiUhvuDzgSVZ" crossorigin="anonymous"></script>
@@ -124,10 +126,13 @@
                   </label>
                   <br><br>
   
-                  <p class="is-size-5">Number of Countries</p>
+                  <p class="is-size-5">Max Number of Countries</p>
                   <div class="columns">
-                    <div class="column is-offset-4 is-4">
-                        <input class="chart-filter input" type="number" value="25" min="5" max="45" size="2">
+                    <div class="column is-2">
+                      <p>Max: <output for="num-countries">25</output></p>
+                    </div>
+                    <div class="column">
+                      <input id="num-countries" class="slider is-fullwidth chart-filter" step="1" min="5" max="45" value="25" type="range">
                     </div>
                   </div>
   
@@ -145,6 +150,25 @@
                     Rural
                   </label>
                   <br><br>
+
+                  <p class="is-size-5">Percentage Range</p>
+                  <div class="columns">
+                    <div class="column is-2">
+                      <p>Min: <output for="min">0</output></p>
+                    </div>
+                    <div class="column">
+                      <input id="min" class="slider is-fullwidth chart-filter" step="1" min="0" max="100" value="0" type="range">
+                    </div>
+                  </div>
+
+                  <div class="columns">
+                    <div class="column is-2">
+                      <p>Max: <output for="max">100</output></p>
+                    </div>
+                    <div class="column">
+                      <input id="max" class="slider is-fullwidth chart-filter" step="1" min="0" max="100" value="100" type="range">
+                    </div>
+                  </div>
 
                   <label class="checkbox">
                     <input class="chart-filter" type="checkbox" name="100-percent" checked>
@@ -169,7 +193,6 @@
       var svgMap = d3.select("#svgMap");
       var gMap = svgMap.append("g")
 
-      // let canvasSize = [svg.style("width"), svg.style("height")];
       var svgBarChart = d3.select("#svgBarChart");
       var gChart = svgBarChart.append("g");
 
@@ -263,8 +286,8 @@
           if (el.type == "radio" && el.checked) {
             options[el.name] = el.value;
           }
-          else if (el.type == "number") {
-            options["numCountries"] = parseInt(el.value);
+          else if (el.type == "range") {
+            options[el.id] = parseInt(el.value);
           }
           else if (el.type == "checkbox") {
             options[el.name] = el.checked;
@@ -278,33 +301,26 @@
         let options = getChosenOptions();
         let populationType = options["population-type"];
         let include100Percent = options["100-percent"];
+        let minPercent = options["min"];
+        let maxPercent = options["max"];
 
-        // Filter data based on the population and select top 25 descending order
         let data = waterData.filter(function(row) {
-          if (include100Percent) {
-            // Filter by population type
-            if (populationType == "total") {
-              return row["Variable Name"] == "Total population with access to safe drinking-water (JMP)";
-            }
-            else if (populationType == "urban") {
-              return row["Variable Name"] == "Urban population with access to safe drinking-water (JMP)";
-            }
-            else if (populationType == "rural") {
-              return row["Variable Name"] == "Rural population with access to safe drinking-water (JMP)";
-            }
+          // Filter by population type
+          if (populationType == "total") {
+            return row["Variable Name"] == "Total population with access to safe drinking-water (JMP)";
           }
-          else {
-            // Filter by population type, keeping only the ones that do not have 100%
-            if (populationType == "total") {
-              return row["Variable Name"] == "Total population with access to safe drinking-water (JMP)" && row["Value"] != "100";
-            }
-            else if (populationType == "urban") {
-              return row["Variable Name"] == "Urban population with access to safe drinking-water (JMP)" && row["Value"] != "100";
-            }
-            else if (populationType == "rural") {
-              return row["Variable Name"] == "Rural population with access to safe drinking-water (JMP)" && row["Value"] != "100";
-            }
+          else if (populationType == "urban") {
+            return row["Variable Name"] == "Urban population with access to safe drinking-water (JMP)";
           }
+          else if (populationType == "rural") {
+            return row["Variable Name"] == "Rural population with access to safe drinking-water (JMP)";
+          }
+        }).filter(function(row) {
+          // Filter to include or exclude countries with 100% access to clean water
+          return (include100Percent) ? row : row["Value"] != 100;
+        }).filter(function(row) {
+          // Filter to include only the countries that fall within the range
+          return minPercent <= row["Value"] && row["Value"] <= maxPercent;
         }).map(row => {
           return [row['Area'],
                   row['Variable Name'],
@@ -321,7 +337,7 @@
           }
         })
         // Select the number of countries as chosen
-        .slice(0, options["numCountries"]);
+        .slice(0, options["num-countries"]);
 
         return data;
       }
@@ -332,6 +348,10 @@
         let xShift = 250;
         let maxValue = 100;
         let t = d3.transition().duration(500);
+
+        console.log(options);
+        console.log(data);
+
 
         // Generate x and y scaling for bar chart
         let x = d3.scaleLinear()
@@ -366,7 +386,7 @@
           .attr("x", xShift)
           .attr("y", d => y(d[0]))
           .attr("width", d => x(d[3]))
-          .attr("height", (y.range()[1] - 100) / options["numCountries"])
+          .attr("height", (y.range()[1] - 100) / options["num-countries"])
           .style("opacity", 1);
         
         bars.exit()
