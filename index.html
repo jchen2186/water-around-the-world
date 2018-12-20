@@ -386,7 +386,7 @@
           .attr("x", xShift)
           .attr("y", d => y(d[0]))
           .attr("width", d => x(d[3]))
-          .attr("height", (y.range()[1] - 100) / options["num-countries"])
+          .attr("height", (y.range()[1] - 100) / data.length)
           .style("opacity", 1);
         
         bars.exit()
