@@ -11,3 +11,4 @@ With the use data from the AQUASTAT Database, this visualization aims to inform 
 
 ## Tools Used
 - D3.js
+- Bulma
