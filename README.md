@@ -8,3 +8,6 @@ With the use data from the AQUASTAT Database, this visualization aims to inform 
 ## Data Used
 - [AQUASTAT data](http://www.fao.org/nr/water/aquastat/data/query/): Access to improved drinking water source for all countries and all available years (only 2015 in this case)
 - [All countries in the world in geoJSON format](https://github.com/johan/world.geo.json/blob/master/countries.geo.json)
+
+## Tools Used
+- D3.js
